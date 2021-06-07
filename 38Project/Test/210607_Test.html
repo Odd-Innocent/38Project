@@ -1,52 +1,46 @@
+<!DOCTYPE html>
 <html>
-    <body>
-        <script src="../lib/three.min.js"></script>
-        <canvas id="c"></canvas>
-    </body>
-    <script>
-
-
-        window.onload = function () {
-            const VIEW_ANGLE = 70
-            const ASPECT = 100 / 100
-            const NEAR = 0.1
-            const FAR = 500
-
-            var renderer = new THREE.WebGLRenderer()
-            renderer.setSize(800, 600)
-            document.body.appendChild(renderer.domElement)
+	<head>
+		<meta charset="utf-8">
+		<title>three.js Test</title>
+		<style>
+			body { margin: 0; }
+		</style>
+	</head>
+	<body>
+		<script src="lib/three.js"></script>
+		<script>
+			const VIEW_ANGLE = 70           // 시야각 (일반적으로 45~75도)
+            const ASPECT = 100 / 100        // 화면의 비율을 나타냄
+            const NEAR = 0.1                // 물체를 얼마나 가까이 있는것까지 볼것
+            const FAR = 500                 // 물체를 얼마나 멀리 있는것까지 볼것
             var scene = new THREE.Scene()
-            var camera = new THREE.PerspectiveCamera(
-                VIEW_ANGLE, // angle : 시야각 (일반적으로 45~75도)
-                ASPECT, // 화면의 비율을 나타냄 (보통 width/height로 사용)
-                NEAR, // 물체를 얼마나 가까이 있는것까지 볼것인가
-                FAR // 물체를 얼마나 멀리 있는것까지 볼것인가
-            )
-            camera.position.set(0, 30, 30)
-            camera.lookAt(scene.position)
-            var geometry = new THREE.BoxGeometry(10, 10, 10) 
-            var meterial = new THREE.MeshLambertMaterial({color: 0xFFFFFF})
+            var camera = new THREE.PerspectiveCamera(VIEW_ANGLE,ASPECT,NEAR,FAR)
+            var renderer = new THREE.WebGLRenderer()
+            renderer.setSize(window.innerWidth, window.innerHeight)
+            document.body.appendChild(renderer.domElement)
 
-            var mesh = new THREE.Mesh(geometry, meterial)
+            const geometry = new THREE.BoxGeometry();
+			const material = new THREE.MeshBasicMaterial( { color: 0xFFFFFF } );
+			const cube = new THREE.Mesh( geometry, material );
+			scene.add( cube );
 
-            scene.add(mesh)
+			camera.position.z = 5;
 
             var light = new THREE.PointLight(0xFFFFFF)
-
             light.position.set(20, 10, 40)
-
             scene.add(light)
-            renderer.setClearColor(0xdddddd, 1)
-            var loop = function () {
-                mesh.rotation.x += 0.1
-                mesh.rotation.y += 0.02
-                mesh.rotation.z += 0.02
-                renderer.render(scene, camera)
-                requestAnimationFrame(loop)
-            }
-            requestAnimationFrame(loop)
 
-        }
-    </script>
+			const animate = function () {
+				requestAnimationFrame( animate );
 
+				cube.rotation.x += 0.01;
+				cube.rotation.y += 0.01;
+
+				renderer.render( scene, camera );
+			};
+
+			animate();
+		</script>
+	</body>
 </html>
