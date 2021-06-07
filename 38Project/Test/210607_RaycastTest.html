@@ -1,0 +1,136 @@
+<html>
+    <head>
+        <title>Raycast Test</title>
+        <meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <style>
+            #loader{
+                border: 5px solid #f3f3f3; /* Light grey */
+                border-top: 5px solid #3d3d3d; /* Grey */
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                z-index: 2;
+            }
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        </style>
+    </head>
+    <body>
+        <div id=loader></div>
+        <script type="module">
+            import * as THREE from '/38Project/Test/lib/three.module.js';
+            import {OrbitControls} from '/38Project/Test/lib/OrbitControls.js';
+            import {GLTFLoader} from '/38Project/Test/lib/GLTFLoader.js';
+            import {RGBELoader} from '/38Project/Test/lib/RGBELoader.js';
+            import {Rhino3dmLoader} from '/38Project/Test/lib/3DMLoader.js'
+            import { GUI } from '/38Project/Test/lib/dat.gui.module.js';
+
+            var container, stats, controls;
+            var camera, scene, renderer;
+            var raycaster, mouse;
+
+            init();
+            render();
+            function init(){
+
+                container = document.createElement('div');
+                document.body.appendChild(container);
+
+                camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.25, 200);
+                camera.position.set(-1.8, 0.9, 2.7);
+
+                scene = new THREE.Scene();
+
+                raycaster = new THREE.Raycaster();
+                mouse = new THREE.Vector2();
+
+                new RGBELoader()
+                    .setDataType(THREE.UnsignedByteType)
+                    .setPath('https://threejs.org/examples/textures/equirectangular/')
+                    .load('royal_esplanade_1k.hdr', function(texture) {
+                        var envMap = pmremGenerator.fromEquirectangular(texture).texture;
+                        scene.background = envMap;
+                        scene.environment = envMap;
+                        texture.dispose();
+                        pmremGenerator.dispose();
+
+                        var loader = new GLTFLoader().setPath('https://threejs.org/examples/models/gltf/DamagedHelmet/glTF/');
+                        document.getElementById( 'loader' ).style.display = 'none';
+                        loader.load('DamagedHelmet.gltf', function(gltf) {
+                            gltf.scene.traverse(function(child) {
+                                if (child.isMesh) {
+                                    child.material.envMap = envMap;
+                                }
+                            });
+                            scene.add(gltf.scene);
+                            render();
+                        });
+
+                        const loader3dm = new Rhino3dmLoader();
+                        loader3dm.setLibraryPath( 'https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/' );
+                        loader3dm.load( 'model/Sample1.3dm', function ( object ) {
+                            scene.add( object );
+                            initGUI( object.userData.layers );
+                        });
+
+                    });
+                    renderer = new THREE.WebGLRenderer({
+                        antialias: true
+                    });
+
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                renderer.toneMappingExposure = 1;
+                renderer.outputEncoding = THREE.sRGBEncoding;
+                container.appendChild(renderer.domElement);
+
+                var pmremGenerator = new THREE.PMREMGenerator(renderer);
+                pmremGenerator.compileEquirectangularShader();
+
+                controls = new OrbitControls(camera, renderer.domElement);
+                controls.addEventListener('change', render); // use if there is no animation loop
+                controls.minDistance = 2;
+                controls.maxDistance = 10;
+                controls.target.set(0, 0, -0.2);
+                controls.update();
+
+                window.addEventListener('resize', onWindowResize, false);
+
+                renderer.domElement.addEventListener('click', onClick, false);
+            }
+
+            function onClick() {
+                event.preventDefault();
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                raycaster.setFromCamera(mouse, camera);
+                var intersects = raycaster.intersectObjects(scene.children, true);
+                if (intersects.length > 0) {
+                    console.log('Intersection:', intersects[0]);
+                    alert("Position : ( "+intersects[0].object.position.x +" , "+ intersects[0].object.position.y+ " , "+ intersects[0].object.position.z+" )");
+                }
+            }
+
+            function onWindowResize() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                render();
+            }
+
+
+            function render() {
+                renderer.render(scene, camera);
+            }
+
+        </script>
+    </body>
+</html>
