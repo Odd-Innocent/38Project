@@ -31,10 +31,15 @@
             import {OrbitControls} from '/38Project/Test/lib/OrbitControls.js';
             import {Rhino3dmLoader} from '/38Project/Test/lib/3DMLoader.js'
             import { GUI } from '/38Project/Test/lib/dat.gui.module.js';
+            
 
             var container, stats, controls;
             var camera, scene, renderer;
             var raycaster, mouse;
+
+            var left = 0.2;
+            var top = 0.1;
+            var depth = 0.7;
 
             init();
             render();
@@ -48,6 +53,7 @@
                 camera.position.set(100 , -100, 100);
 
                 scene = new THREE.Scene();
+                scene.updateMatrixWorld(true);
                 raycaster = new THREE.Raycaster();
                 mouse = new THREE.Vector2();
 
@@ -63,14 +69,16 @@
                 // Main Loader
                 const loader = new Rhino3dmLoader();
                 loader.setLibraryPath('https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/' );
-                loader.load('model/Sample1.3dm',function(object){
-                    document.getElementById( 'loader' ).style.display = 'none';
-                    object.position.set(0, 0, 0)
-                    object.transl
-                    scene.add(object);
-                     
-                    BBOX(object,scene);
-                })
+
+                ModelLoader("TestBed/M01.3dm",-30,30,0,loader,scene);
+                ModelLoader("TestBed/M02.3dm",0,30,0,loader,scene);
+                ModelLoader("TestBed/M03.3dm",30,30,0,loader,scene);
+                ModelLoader("TestBed/M04.3dm",-30,0,0,loader,scene);
+                ModelLoader("TestBed/M05.3dm",0,0,0,loader,scene);
+                ModelLoader("TestBed/M06.3dm",30,0,0,loader,scene);
+                ModelLoader("TestBed/M07.3dm",-30,-30,0,loader,scene);
+                ModelLoader("TestBed/M08.3dm",0,-30,0,loader,scene);
+                ModelLoader("TestBed/M09.3dm",30,-30,0,loader,scene);
 
                 // Light Set
                 const light1 = new THREE.DirectionalLight( 0xffffff, 1 );
@@ -90,12 +98,37 @@
 
             }
 
-            function loadModel(url) {
-                return new Promise(resolve => {
-                    new THREE.GLTFLoader().load(url, resolve);
-                });
-            }
+            function ModelLoader(url,x,y,z,loader,scene){
+                    loader.load(url,function(obj){
+                        document.getElementById('loader').style.display = 'none';
+                        obj.position.set(0,0,0);
 
+                        obj.translateX(x);
+                        obj.translateY(y);
+                        obj.translateZ(z);
+
+                        scene.add(obj);
+                        BBOX(obj,scene);
+                    })
+
+                }
+
+            function onClick() {
+                event.preventDefault();
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                raycaster.setFromCamera(mouse, camera);
+                var intersects = raycaster.intersectObjects(scene.children, true);
+                if (intersects.length > 0) {
+                    var p = intersects[0].point;
+                    const box3 = new THREE.Box3().setFromObject(intersects[0].object);
+                    p = new THREE.Vector3();
+                    box3.getCenter(p);
+                }
+                var n = new THREE.Vector3(p.x,p.y,p.z+100);
+                camera.position.copy(n);
+            }
+            
             function resize() {
 				camera.aspect = window.innerWidth / window.innerHeight;
 				camera.updateProjectionMatrix();
@@ -114,22 +147,6 @@
                 scene.add(helper);
             }
 
-            function onClick() {
-                event.preventDefault();
-                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-                raycaster.setFromCamera(mouse, camera);
-                var intersects = raycaster.intersectObjects(scene.children, true);
-                if (intersects.length > 0) {
-                    console.log('Intersection:', intersects[0]);
-                    alert("Position : ( "+intersects[0].object.position.x +" , "+ intersects[0].object.position.y+ " , "+ intersects[0].object.position.z+" )");
-                }
-            }
-
         </script>
-
-
     </body>
-
-
 </html>
