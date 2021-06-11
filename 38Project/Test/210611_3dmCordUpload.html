@@ -1,0 +1,128 @@
+<html>
+    <head>
+        <title>Rhino Setup Test</title>
+        <meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <style>
+            #loader{
+                border: 5px solid #f3f3f3; /* Light grey */
+                border-top: 5px solid #3d3d3d; /* Grey */
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+                position: absolute;
+                top: 40%;
+                left: 50%;
+                z-index: 2;
+            }
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            body { margin: 0; }
+        </style>
+    </head>
+
+    <body>
+        <div id=loader></div>
+        <script type="module">
+            import * as THREE from '/38Project/Test/lib/three.module.js';
+            import {OrbitControls} from '/38Project/Test/lib/OrbitControls.js';
+            import {Rhino3dmLoader} from '/38Project/Test/lib/3DMLoader.js'
+            import { GUI } from '/38Project/Test/lib/dat.gui.module.js';
+
+            var container, stats, controls;
+            var camera, scene, renderer;
+            var raycaster, mouse;
+
+            init();
+            render();
+
+            function init(){
+                THREE.Object3D.DefaultUp = new THREE.Vector3( 0, 0, 1 );
+                container = document.createElement('div');
+                document.body.appendChild(container);
+
+                camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight,0.1,10000000)
+                camera.position.set(100 , -100, 100);
+
+                scene = new THREE.Scene();
+                raycaster = new THREE.Raycaster();
+                mouse = new THREE.Vector2();
+
+                // Renderer Set
+                renderer = new THREE.WebGLRenderer( { antialias: true } );
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                renderer.toneMappingExposure = 1;
+                renderer.outputEncoding = THREE.sRGBEncoding;
+                container.appendChild(renderer.domElement);
+
+                // Main Loader
+                const loader = new Rhino3dmLoader();
+                loader.setLibraryPath('https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/' );
+                loader.load('model/Sample1.3dm',function(object){
+                    document.getElementById( 'loader' ).style.display = 'none';
+                    object.position.set(0, 0, 0)
+                    object.transl
+                    scene.add(object);
+                     
+                    BBOX(object,scene);
+                })
+
+                // Light Set
+                const light1 = new THREE.DirectionalLight( 0xffffff, 1 );
+				light1.position.set( 1, -1, 1 ).normalize();
+				scene.add(light1);
+                const light2 = new THREE.DirectionalLight( 0xffffff, 1 );
+				light2.position.set( -1, 1, 1 ).normalize();
+				scene.add(light2);
+
+                const geometry = new THREE.BoxGeometry();
+			    const material = new THREE.MeshBasicMaterial( { color: 0xFFFFFF } );
+			    const cube = new THREE.Mesh( geometry, material );
+			    scene.add( cube );
+
+                controls = new OrbitControls( camera, renderer.domElement );
+                renderer.domElement.addEventListener('click', onClick, false);
+
+            }
+            function resize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+
+            function render() {
+                controls.update();
+                renderer.render(scene, camera);
+                requestAnimationFrame( render );
+            }
+
+            function BBOX(obj,scene) {
+                var helper = new THREE.BoundingBoxHelper(obj, 0xff0000);
+                helper.update();
+                scene.add(helper);
+            }
+
+            function onClick() {
+                event.preventDefault();
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                raycaster.setFromCamera(mouse, camera);
+                var intersects = raycaster.intersectObjects(scene.children, true);
+                if (intersects.length > 0) {
+                    console.log('Intersection:', intersects[0]);
+                    alert("Position : ( "+intersects[0].object.position.x +" , "+ intersects[0].object.position.y+ " , "+ intersects[0].object.position.z+" )");
+                }
+            }
+
+        </script>
+
+
+    </body>
+
+
+</html>
