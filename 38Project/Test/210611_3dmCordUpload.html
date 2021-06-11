@@ -89,6 +89,13 @@
                 renderer.domElement.addEventListener('click', onClick, false);
 
             }
+
+            function loadModel(url) {
+                return new Promise(resolve => {
+                    new THREE.GLTFLoader().load(url, resolve);
+                });
+            }
+
             function resize() {
 				camera.aspect = window.innerWidth / window.innerHeight;
 				camera.updateProjectionMatrix();
