@@ -37,10 +37,6 @@
             var camera, scene, renderer;
             var raycaster, mouse;
 
-            var left = 0.2;
-            var top = 0.1;
-            var depth = 0.7;
-
             init();
             render();
 
@@ -54,6 +50,7 @@
 
                 scene = new THREE.Scene();
                 scene.updateMatrixWorld(true);
+                scene.background = new THREE.Color(0xffffff);
                 raycaster = new THREE.Raycaster();
                 mouse = new THREE.Vector2();
 
@@ -88,11 +85,6 @@
 				light2.position.set( -1, 1, 1 ).normalize();
 				scene.add(light2);
 
-                const geometry = new THREE.BoxGeometry();
-			    const material = new THREE.MeshBasicMaterial( { color: 0xFFFFFF } );
-			    const cube = new THREE.Mesh( geometry, material );
-			    scene.add( cube );
-
                 controls = new OrbitControls( camera, renderer.domElement );
                 renderer.domElement.addEventListener('click', onClick, false);
 
@@ -102,7 +94,6 @@
                     loader.load(url,function(obj){
                         document.getElementById('loader').style.display = 'none';
                         obj.position.set(0,0,0);
-
                         obj.translateX(x);
                         obj.translateY(y);
                         obj.translateZ(z);
@@ -125,8 +116,10 @@
                     p = new THREE.Vector3();
                     box3.getCenter(p);
                 }
-                var n = new THREE.Vector3(p.x,p.y,p.z+100);
+                var n = new THREE.Vector3(p.x-50,p.y-50,100);
+                var m = new THREE.Vector3(p.x,p.y,0);
                 camera.position.copy(n);
+                camera.lookAt(m);
             }
             
             function resize() {
