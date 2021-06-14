@@ -46,7 +46,7 @@
                 document.body.appendChild(container);
 
                 camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight,0.1,10000000)
-                camera.position.set(100 , -100, 100);
+                camera.position.set(-100 , -100, 100);
 
                 scene = new THREE.Scene();
                 scene.updateMatrixWorld(true);
@@ -87,7 +87,6 @@
 
                 controls = new OrbitControls( camera, renderer.domElement );
                 renderer.domElement.addEventListener('click', onClick, false);
-
             }
 
             function ModelLoader(url,x,y,z,loader,scene){
@@ -116,12 +115,19 @@
                     p = new THREE.Vector3();
                     box3.getCenter(p);
                 }
-                var n = new THREE.Vector3(p.x-50,p.y-50,100);
-                var m = new THREE.Vector3(p.x,p.y,0);
-                camera.position.copy(n);
-                camera.lookAt(m);
+                cam_set(p.x-50,p.y-50,100,p.x,p.y,p.z)
             }
             
+            function cam_set(x,y,z,ax,ay,az) {
+                var n = new THREE.Vector3(x,y,z)
+                camera.position.copy(n);
+                controls.target.set(ax,ay,az);
+            }
+
+            function cam_move(){
+                console.log(camera.getWorldPosition().x)
+            }
+
             function resize() {
 				camera.aspect = window.innerWidth / window.innerHeight;
 				camera.updateProjectionMatrix();
