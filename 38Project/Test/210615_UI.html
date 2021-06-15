@@ -1,0 +1,183 @@
+<html>
+    <head>
+        <title>Rhino Setup Test</title>
+        <meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <style>
+            #loader{
+                border: 5px solid #f3f3f3; /* Light grey */
+                border-top: 5px solid #3d3d3d; /* Grey */
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+                position: absolute;
+                top: 40%;
+                left: 40%;
+                z-index: 2;
+            }
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+
+            #logo{
+                position:fixed;
+                top : -10;
+                left : 10;
+            }
+
+            body { margin: 0; }
+
+            #mainUi{
+                position:fixed;
+                right : 0;
+                width: 20%;
+                height: 100%;
+                box-shadow: 0px 0px 10px 1px rgba(0,0,0,0.1);
+            }
+
+        </style>
+    </head>
+
+    <body>
+        <div id=loader></div>
+        <div id=logo> <img src="img/Logo.png" alt="logo" width="100" height=""></div>
+        
+        <div id=mainUI>
+            <div>
+
+            </div>
+        </div>
+
+        <script type="module">
+            import * as THREE from '/38Project/Test/lib/three.module.js';
+            import {OrbitControls} from '/38Project/Test/lib/OrbitControls.js';
+            import {Rhino3dmLoader} from '/38Project/Test/lib/3DMLoader.js'
+            import { GUI } from '/38Project/Test/lib/dat.gui.module.js';
+            
+
+            var container, stats, controls;
+            var camera, scene, renderer;
+            var raycaster, mouse;
+            var size = 0.8;
+
+            init();
+            render();
+
+            function init(){
+                THREE.Object3D.DefaultUp = new THREE.Vector3( 0, 0, 1 );
+                container = document.createElement('div');
+                document.body.appendChild(container);
+
+                camera = new THREE.PerspectiveCamera(45, window.innerWidth*size/window.innerHeight,0.1,10000000)
+                camera.position.set(-100 , -100, 100);
+
+                scene = new THREE.Scene();
+                scene.updateMatrixWorld(true);
+                scene.background = new THREE.Color(0xFBFBFB);
+                raycaster = new THREE.Raycaster();
+                mouse = new THREE.Vector2();
+
+                // Renderer Set
+                renderer = new THREE.WebGLRenderer( { antialias: true } );
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.setSize(window.innerWidth*size, window.innerHeight);
+                renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                renderer.toneMappingExposure = 1;
+                renderer.outputEncoding = THREE.sRGBEncoding;
+                container.appendChild(renderer.domElement);
+                
+                // Main Loader
+                const loader = new Rhino3dmLoader();
+                loader.setLibraryPath('https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/' );
+
+                ModelLoader("TestBed/M01.3dm",-30,30,0,loader,scene);
+                ModelLoader("TestBed/M02.3dm",0,30,0,loader,scene);
+                ModelLoader("TestBed/M03.3dm",30,30,0,loader,scene);
+                ModelLoader("TestBed/M04.3dm",-30,0,0,loader,scene);
+                ModelLoader("TestBed/M05.3dm",0,0,0,loader,scene);
+                ModelLoader("TestBed/M06.3dm",30,0,0,loader,scene);
+                ModelLoader("TestBed/M07.3dm",-30,-30,0,loader,scene);
+                ModelLoader("TestBed/M08.3dm",0,-30,0,loader,scene);
+                ModelLoader("TestBed/M09.3dm",30,-30,0,loader,scene);
+
+                light_Set(1,-1,1);
+                light_Set(-1,1,1);
+
+                controls = new OrbitControls( camera, renderer.domElement );
+                controls.enableDamping = true
+                //renderer.domElement.addEventListener('click', onClick, false);
+
+                window.addEventListener( 'resize', onWindowResize );
+            }
+
+            //3DM Loader
+            function ModelLoader(url,x,y,z,loader,scene){
+                loader.load(url,function(obj){
+                    document.getElementById('loader').style.display = 'none';
+                    obj.position.set(0,0,0);
+                    obj.translateX(x);
+                    obj.translateY(y);
+                    obj.translateZ(z);
+
+                    scene.add(obj);
+                    BBOX(obj,scene);
+                    })
+            }
+            
+            //Click Event
+            function onClick() {
+                event.preventDefault();
+                mouse.x = (event.clientX / window.innerWidth*size) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                raycaster.setFromCamera(mouse, camera);
+                var intersects = raycaster.intersectObjects(scene.children, true);
+                if (intersects.length > 0) {
+                    var p = intersects[0].point;
+                    const box3 = new THREE.Box3().setFromObject(intersects[0].object);
+                    p = new THREE.Vector3();
+                    box3.getCenter(p);
+                }
+                cam_Set(p.x-50,p.y-50,100,p.x,p.y,p.z)
+            }
+            
+            //Camera Position Set
+            function cam_Set(x,y,z,ax,ay,az) {
+                var n = new THREE.Vector3(x,y,z)
+                camera.position.copy(n);
+                controls.target.set(ax,ay,az);
+            }
+            
+            //Window Resizer
+			function onWindowResize() {
+                camera.aspect = window.innerWidth*size / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize( window.innerWidth*size, window.innerHeight );
+                labelRenderer.setSize( window.innerWidth*size, window.innerHeight );
+            }
+
+            //Light Set
+            function light_Set(x,y,z){
+                const light = new THREE.DirectionalLight( 0xffffff, 1 );
+				light.position.set(x,y,z).normalize();
+				scene.add(light);
+            }
+
+            //Renderer
+            function render() {
+                controls.update();
+                renderer.render(scene, camera);
+                requestAnimationFrame( render );
+            }
+
+            //Object Bounding Box
+            function BBOX(obj,scene) {
+                var helper = new THREE.BoundingBoxHelper(obj, 0xff0000);
+                helper.update();
+                scene.add(helper);
+            }
+
+        </script>
+    </body>
+</html>
