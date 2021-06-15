@@ -16,6 +16,7 @@
                 left: 40%;
                 z-index: 2;
             }
+
             @keyframes spin {
                 0% { transform: rotate(0deg); }
                 100% { transform: rotate(360deg); }
@@ -26,24 +27,23 @@
                 top : -10;
                 left : 10;
             }
-
             body { margin: 0; }
 
             #mainUi{
                 position:fixed;
                 right : 0;
-                width: 20%;
-                height: 100%;
-                box-shadow: 0px 0px 10px 1px rgba(0,0,0,0.1);
+                width: 300px;
+                height: 100%; 
+                box-shadow: 0px 0px 10px 1px rgba(0,0,0,0.2);
             }
-
         </style>
+        <script type="text/javascript">var timerStart = Date.now();</script>
     </head>
 
     <body>
         <div id=loader></div>
         <div id=logo> <img src="img/Logo.png" alt="logo" width="100" height=""></div>
-        
+
         <div id=mainUI>
             <div>
 
@@ -56,11 +56,10 @@
             import {Rhino3dmLoader} from '/38Project/Test/lib/3DMLoader.js'
             import { GUI } from '/38Project/Test/lib/dat.gui.module.js';
             
-
             var container, stats, controls;
             var camera, scene, renderer;
             var raycaster, mouse;
-            var size = 0.8;
+            var size = "300";
 
             init();
             render();
@@ -70,7 +69,7 @@
                 container = document.createElement('div');
                 document.body.appendChild(container);
 
-                camera = new THREE.PerspectiveCamera(45, window.innerWidth*size/window.innerHeight,0.1,10000000)
+                camera = new THREE.PerspectiveCamera(45, (window.innerWidth-size)/window.innerHeight,0.1,10000000)
                 camera.position.set(-100 , -100, 100);
 
                 scene = new THREE.Scene();
@@ -82,7 +81,7 @@
                 // Renderer Set
                 renderer = new THREE.WebGLRenderer( { antialias: true } );
                 renderer.setPixelRatio(window.devicePixelRatio);
-                renderer.setSize(window.innerWidth*size, window.innerHeight);
+                renderer.setSize((window.innerWidth-size), window.innerHeight);
                 renderer.toneMapping = THREE.ACESFilmicToneMapping;
                 renderer.toneMappingExposure = 1;
                 renderer.outputEncoding = THREE.sRGBEncoding;
@@ -122,14 +121,15 @@
                     obj.translateZ(z);
 
                     scene.add(obj);
-                    BBOX(obj,scene);
+                    //BBOX(obj,scene);
                     })
+                
             }
             
             //Click Event
             function onClick() {
                 event.preventDefault();
-                mouse.x = (event.clientX / window.innerWidth*size) * 2 - 1;
+                mouse.x = (event.clientX / (window.innerWidth-size)) * 2 - 1;
                 mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
                 raycaster.setFromCamera(mouse, camera);
                 var intersects = raycaster.intersectObjects(scene.children, true);
@@ -151,10 +151,10 @@
             
             //Window Resizer
 			function onWindowResize() {
-                camera.aspect = window.innerWidth*size / window.innerHeight;
+                camera.aspect = (window.innerWidth-size) / window.innerHeight;
                 camera.updateProjectionMatrix();
-                renderer.setSize( window.innerWidth*size, window.innerHeight );
-                labelRenderer.setSize( window.innerWidth*size, window.innerHeight );
+                renderer.setSize( (window.innerWidth-size), window.innerHeight );
+                //labelRenderer.setSize( (window.innerWidth-size), window.innerHeight );
             }
 
             //Light Set
